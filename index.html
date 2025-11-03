@@ -1,0 +1,198 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RideRev — Aftermarket Bike Parts</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #fafafa;
+      color: #333;
+    }
+    header {
+      background: #1b1b1b;
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      font-size: 1.5rem;
+      letter-spacing: 1px;
+    }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      margin: 0 10px;
+    }
+    nav a:hover {
+      color: #ffb400;
+    }
+    .hero {
+      background: url('https://images.unsplash.com/photo-1508609349937-5ec4ae374ebf?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+      color: white;
+      text-align: center;
+      padding: 120px 20px;
+    }
+    .hero h2 {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+    .brands {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      padding: 3rem 1rem;
+      flex-wrap: wrap;
+      background: #fff;
+    }
+    .brand {
+      text-align: center;
+      width: 200px;
+    }
+    .brand img {
+      width: 100%;
+      height: auto;
+      filter: grayscale(100%);
+      transition: 0.3s;
+    }
+    .brand img:hover {
+      filter: grayscale(0%);
+      transform: scale(1.05);
+    }
+    .parts {
+      padding: 3rem 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+    .part {
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: 0.3s;
+    }
+    .part:hover {
+      transform: translateY(-5px);
+    }
+    .part img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+    .part-info {
+      padding: 1rem;
+    }
+    .part-info h3 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+    .filter-buttons {
+      text-align: center;
+      margin: 2rem 0;
+    }
+    .filter-buttons button {
+      margin: 0 10px;
+      padding: 10px 20px;
+      border: none;
+      background: #1b1b1b;
+      color: #fff;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .filter-buttons button:hover {
+      background: #ffb400;
+      color: #000;
+    }
+    footer {
+      text-align: center;
+      padding: 2rem;
+      background: #1b1b1b;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>RideRev</h1>
+    <nav>
+      <a href="#brands">Brands</a>
+      <a href="#parts">Parts</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h2>Upgrade Your Ride</h2>
+    <p>Premium aftermarket bike parts from the brands you trust.</p>
+  </section>
+
+  <section id="brands" class="brands">
+    <div class="brand">
+      <img src="https://upload.wikimedia.org/wikipedia/en/4/44/Specialized_Bicycle_Components_logo.svg" alt="Specialized">
+      <h3>Specialized</h3>
+    </div>
+    <div class="brand">
+      <img src="https://upload.wikimedia.org/wikipedia/en/5/52/Santa_Cruz_Bicycles_logo.svg" alt="Santa Cruz">
+      <h3>Santa Cruz</h3>
+    </div>
+    <div class="brand">
+      <img src="https://upload.wikimedia.org/wikipedia/en/4/47/Mongoose_Logo.svg" alt="Mongoose">
+      <h3>Mongoose</h3>
+    </div>
+  </section>
+
+  <section id="parts">
+    <div class="filter-buttons">
+      <button onclick="filterParts('all')">All</button>
+      <button onclick="filterParts('Specialized')">Specialized</button>
+      <button onclick="filterParts('Santa Cruz')">Santa Cruz</button>
+      <button onclick="filterParts('Mongoose')">Mongoose</button>
+    </div>
+
+    <div class="parts">
+      <div class="part" data-brand="Specialized">
+        <img src="https://images.unsplash.com/photo-1574180045827-681f8a1a9622?auto=format&fit=crop&w=800&q=80" alt="Handlebar">
+        <div class="part-info">
+          <h3>Specialized Carbon Handlebar</h3>
+          <p>Lightweight performance upgrade.</p>
+        </div>
+      </div>
+      <div class="part" data-brand="Santa Cruz">
+        <img src="https://images.unsplash.com/photo-1558980394-0c623066013b?auto=format&fit=crop&w=800&q=80" alt="Fork">
+        <div class="part-info">
+          <h3>Santa Cruz Suspension Fork</h3>
+          <p>Perfect for downhill adventures.</p>
+        </div>
+      </div>
+      <div class="part" data-brand="Mongoose">
+        <img src="https://images.unsplash.com/photo-1525104698733-6f3b67e6313e?auto=format&fit=crop&w=800&q=80" alt="Crankset">
+        <div class="part-info">
+          <h3>Mongoose Alloy Crankset</h3>
+          <p>Durable and reliable drivetrain upgrade.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer id="contact">
+    <p>Subscribe for updates on the latest bike parts and upgrades.</p>
+    <p>© 2025 RideRev. All rights reserved.</p>
+  </footer>
+
+  <script>
+    function filterParts(brand) {
+      const parts = document.querySelectorAll('.part');
+      parts.forEach(part => {
+        part.style.display = brand === 'all' || part.dataset.brand === brand ? 'block' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>
