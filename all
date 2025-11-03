@@ -594,4 +594,337 @@ loadParts(partsDB);<!DOCTYPE html>
 ├── css/
 │   └── style.css
 └── js/
-    └── script.js
+    └── script.js// --- Product database ---
+const partsDB = [
+  { id: 1, brand: "Specialized", name: "Carbon Handlebar", desc: "Lightweight performance upgrade.", price: 180, img: "https://images.unsplash.com/photo-1574180045827-681f8a1a9622?auto=format&fit=crop&w=800&q=80" },
+  { id: 2, brand: "Santa Cruz", name: "Suspension Fork", desc: "Perfect for downhill adventures.", price: 480, img: "https://images.unsplash.com/photo-1558980394-0c623066013b?auto=format&fit=crop&w=800&q=80" },
+  { id: 3, brand: "Mongoose", name: "Alloy Crankset", desc: "Durable and reliable drivetrain upgrade.", price: 220, img: "https://images.unsplash.com/photo-1525104698733-6f3b67e6313e?auto=format&fit=crop&w=800&q=80" },
+  { id: 4, brand: "Specialized", name: "Power Saddle", desc: "Comfort meets aerodynamics.", price: 140, img: "https://images.unsplash.com/photo-1629323571381-4b7853a9b13f?auto=format&fit=crop&w=800&q=80" }
+];
+
+// --- Current User Management ---
+let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
+let users = JSON.parse(localStorage.getItem("users")) || [];
+
+// --- User-Specific Storage ---
+function getUserData(key) {
+  if (!currentUser) return [];
+  return JSON.parse(localStorage.getItem(`${currentUser.username}_${key}`)) || [];
+}
+function setUserData(key, data) {
+  if (!currentUser) return;
+  localStorage.setItem(`${currentUser.username}_${key}`, JSON.stringify(data));
+}
+
+let wishlist = getUserData("wishlist");
+let cart = getUserData("cart");
+
+// --- DOM Elements ---
+const partsContainer = document.querySelector(".parts") || document.querySelector(".wishlist-container");
+const searchInput = document.querySelector("#search-input");
+const brandFilter = document.querySelector("#brand-filter");
+const darkToggle = document.querySelector("#dark-toggle");
+
+// --- Auth Header Greeting ---
+function showUserGreeting() {
+  if (!currentUser) return;
+  const header = document.querySelector("header");
+  const greet = document.createElement("div");
+  greet.className = "user-greeting";
+  greet.innerHTML = `Hi, ${currentUser.username}! <button class="logout-btn">Logout</button>`;
+  header.appendChild(greet);
+  greet.querySelector(".logout-btn").addEventListener("click", logoutUser);
+}
+function logoutUser() {
+  localStorage.removeItem("currentUser");
+  window.location.href = "login.html";
+}
+
+// --- Render Parts ---
+function loadParts(data) {
+  if (!partsContainer) return;
+  partsContainer.innerHTML = "";
+  data.forEach(part => {
+    const inWishlist = wishlist.some(i => i.id === part.id);
+    const inCart = cart.some(i => i.id === part.id);
+    const el = document.createElement("div");
+    el.className = "part";
+    el.innerHTML = `
+      <img src="${part.img}" alt="${part.name}">
+      <div class="part-info">
+        <h3>${part.brand} ${part.name}</h3>
+        <p>${part.desc}</p>
+        <p><strong>$${part.price}</strong></p>
+        <button class="wishlist-btn" data-id="${part.id}">
+          ${inWishlist ? "★ In Wishlist" : "☆ Add to Wishlist"}
+        </button>
+        <button class="wishlist-btn add-cart" data-id="${part.id}">
+          ${inCart ? "🛒 In Cart" : "🛍 Add to Cart"}
+        </button>
+      </div>`;
+    partsContainer.appendChild(el);
+  });
+
+  document.querySelectorAll(".wishlist-btn").forEach(btn => {
+    if (btn.classList.contains("add-cart")) btn.addEventListener("click", toggleCart);
+    else btn.addEventListener("click", toggleWishlist);
+  });
+}
+
+// --- Wishlist Logic ---
+function toggleWishlist(e) {
+  if (!currentUser) return alert("Please log in to save wishlist items.");
+  const id = parseInt(e.target.dataset.id);
+  const part = partsDB.find(p => p.id === id);
+  const exists = wishlist.some(i => i.id === id);
+  wishlist = exists ? wishlist.filter(i => i.id !== id) : [...wishlist, part];
+  setUserData("wishlist", wishlist);
+  loadParts(partsDB);
+  updateSidebar();
+}
+
+// --- Cart Logic ---
+function toggleCart(e) {
+  if (!currentUser) return alert("Please log in to add items to your cart.");
+  const id = parseInt(e.target.dataset.id);
+  const part = partsDB.find(p => p.id === id);
+  const exists = cart.some(i => i.id === id);
+  cart = exists ? cart.filter(i => i.id !== id) : [...cart, part];
+  setUserData("cart", cart);
+  loadParts(partsDB);
+  updateSidebar();
+}
+
+// --- Wishlist Page Loader ---
+function loadWishlistPage() {
+  if (!currentUser) return (window.location.href = "login.html");
+  if (!partsContainer) return;
+  if (wishlist.length === 0) {
+    partsContainer.innerHTML = `<p class="empty-message">Your wishlist is empty 😢</p>`;
+    return;
+  }
+  partsContainer.innerHTML = "";
+  wishlist.forEach(item => {
+    const el = document.createElement("div");
+    el.className = "part";
+    el.innerHTML = `
+      <img src="${item.img}" alt="${item.name}">
+      <div class="part-info">
+        <h3>${item.brand} ${item.name}</h3>
+        <p>${item.desc}</p>
+        <p><strong>$${item.price}</strong></p>
+        <button class="wishlist-btn move-cart" data-id="${item.id}">Move to Cart 🛒</button>
+        <button class="wishlist-btn" data-id="${item.id}">🗑 Remove</button>
+      </div>`;
+    partsContainer.appendChild(el);
+  });
+
+  document.querySelectorAll(".move-cart").forEach(btn =>
+    btn.addEventListener("click", e => {
+      const id = parseInt(e.target.dataset.id);
+      const item = wishlist.find(i => i.id === id);
+      wishlist = wishlist.filter(i => i.id !== id);
+      if (!cart.some(c => c.id === id)) cart.push(item);
+      saveAll();
+      loadWishlistPage();
+      updateSidebar();
+    })
+  );
+
+  document.querySelectorAll(".wishlist-btn:not(.move-cart)").forEach(btn =>
+    btn.addEventListener("click", e => {
+      const id = parseInt(e.target.dataset.id);
+      wishlist = wishlist.filter(i => i.id !== id);
+      saveAll();
+      loadWishlistPage();
+      updateSidebar();
+    })
+  );
+}
+
+// --- Search + Filter ---
+function filterParts() {
+  const q = searchInput?.value?.toLowerCase() || "";
+  const brand = brandFilter?.value || "all";
+  const filtered = partsDB.filter(
+    p =>
+      (brand === "all" || p.brand === brand) &&
+      (p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q))
+  );
+  loadParts(filtered);
+}
+
+// --- Save Both ---
+function saveAll() {
+  setUserData("wishlist", wishlist);
+  setUserData("cart", cart);
+}
+
+// --- Sidebar Setup ---
+function createSidebars() {
+  const wishSidebar = document.createElement("div");
+  wishSidebar.className = "wishlist-sidebar";
+  wishSidebar.innerHTML = `<h3>My Wishlist</h3><div id="sidebar-wishlist"></div>`;
+  document.body.appendChild(wishSidebar);
+
+  const cartSidebar = document.createElement("div");
+  cartSidebar.className = "cart-sidebar";
+  cartSidebar.innerHTML = `<h3>My Cart</h3><div id="sidebar-cart"></div><div class="cart-total"></div><button class="checkout-btn">Checkout</button>`;
+  document.body.appendChild(cartSidebar);
+
+  const wishBtn = document.createElement("button");
+  wishBtn.id = "wishlist-toggle";
+  wishBtn.textContent = "❤️";
+  document.body.appendChild(wishBtn);
+
+  const cartBtn = document.createElement("button");
+  cartBtn.id = "cart-toggle";
+  cartBtn.textContent = "🛒";
+  document.body.appendChild(cartBtn);
+
+  wishBtn.addEventListener("click", () => {
+    if (!currentUser) return alert("Please log in first!");
+    wishSidebar.classList.toggle("open");
+    cartSidebar.classList.remove("open");
+    updateSidebar();
+  });
+  cartBtn.addEventListener("click", () => {
+    if (!currentUser) return alert("Please log in first!");
+    cartSidebar.classList.toggle("open");
+    wishSidebar.classList.remove("open");
+    updateSidebar();
+  });
+
+  cartSidebar.querySelector(".checkout-btn").addEventListener("click", () => {
+    if (cart.length === 0) return alert("Your cart is empty!");
+    window.location.href = "checkout.html";
+  });
+}
+
+// --- Update Sidebar ---
+function updateSidebar() {
+  const wishDiv = document.querySelector("#sidebar-wishlist");
+  const cartDiv = document.querySelector("#sidebar-cart");
+  const cartTotalDiv = document.querySelector(".cart-total");
+  if (!wishDiv || !cartDiv) return;
+
+  wishDiv.innerHTML = wishlist.length
+    ? ""
+    : `<p class="sidebar-empty">Your wishlist is empty.</p>`;
+  wishlist.forEach(item => {
+    const el = document.createElement("div");
+    el.className = "sidebar-item";
+    el.innerHTML = `<img src="${item.img}"><div><strong>${item.brand}</strong><br><small>${item.name}</small></div><button data-id="${item.id}">×</button>`;
+    el.querySelector("button").addEventListener("click", () => {
+      wishlist = wishlist.filter(i => i.id !== item.id);
+      saveAll();
+      updateSidebar();
+      if (document.querySelector(".wishlist-container")) loadWishlistPage();
+    });
+    wishDiv.appendChild(el);
+  });
+
+  cartDiv.innerHTML = cart.length
+    ? ""
+    : `<p class="sidebar-empty">Your cart is empty.</p>`;
+  let total = 0;
+  cart.forEach(item => {
+    total += item.price;
+    const el = document.createElement("div");
+    el.className = "cart-item";
+    el.innerHTML = `<img src="${item.img}"><div><strong>${item.brand}</strong><br><small>${item.name}</small></div><span>$${item.price}</span><button data-id="${item.id}">×</button>`;
+    el.querySelector("button").addEventListener("click", () => {
+      cart = cart.filter(c => c.id !== item.id);
+      saveAll();
+      updateSidebar();
+    });
+    cartDiv.appendChild(el);
+  });
+  cartTotalDiv.innerHTML = cart.length ? `<p>Total: $${total}</p>` : "";
+}
+
+// --- Dark Mode ---
+function toggleDarkMode() {
+  document.body.classList.toggle("dark");
+  localStorage.setItem("darkMode", document.body.classList.contains("dark"));
+}
+if (localStorage.getItem("darkMode") === "true") document.body.classList.add("dark");
+
+// --- Init ---
+if (searchInput) searchInput.addEventListener("input", filterParts);
+if (brandFilter) brandFilter.addEventListener("change", filterParts);
+if (darkToggle) darkToggle.addEventListener("click", toggleDarkMode);
+
+createSidebars();
+if (document.querySelector(".wishlist-container")) loadWishlistPage();
+else loadParts(partsDB);
+if (currentUser) showUserGreeting();
+updateSidebar();!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — RideRev</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="auth-container">
+    <h2>Login</h2>
+    <input id="login-username" placeholder="Username" />
+    <input id="login-password" type="password" placeholder="Password" />
+    <button id="login-btn">Login</button>
+    <a href="register.html">Don’t have an account? Register</a>
+  </div>
+  <script>
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    document.querySelector("#login-btn").addEventListener("click", () => {
+      const username = document.querySelector("#login-username").value.trim();
+      const password = document.querySelector("#login-password").value.trim();
+      const user = users.find(u => u.username === username && u.password === password);
+      if (!user) return alert("Invalid credentials!");
+      localStorage.setItem("currentUser", JSON.stringify(user));
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — RideRev</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="auth-container">
+    <h2>Create Account</h2>
+    <input id="reg-username" placeholder="Username" />
+    <input id="reg-password" type="password" placeholder="Password" />
+    <button id="reg-btn">Register</button>
+    <a href="login.html">Already have an account? Login</a>
+  </div>
+  <script>
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    document.querySelector("#reg-btn").addEventListener("click", () => {
+      const username = document.querySelector("#reg-username").value.trim();
+      const password = document.querySelector("#reg-password").value.trim();
+      if (!username || !password) return alert("All fields required.");
+      if (users.some(u => u.username === username)) return alert("Username already taken!");
+      users.push({ username, password });
+      localStorage.setItem("users", JSON.stringify(users));
+      alert("✅ Registration successful! Please log in.");
+      window.location.href = "login.html";
+    });
+  </script>
+</body>
+</html>const card = document.createElement("div");
+card.className = "part-card";
+card.innerHTML = `
+  <img src="${part.img}" alt="${part.name}" />
+  <h3>${part.name}</h3>
+  <p>${part.desc}</p>
+  <p>$${part.price}</p>
+  <button onclick="addToWishlist(${part.id})">❤️ Wishlist</button>
+  <button onclick="addToCart(${part.id})">🛒 Add to Cart</button>
+`;
+document.querySelector("#parts-container").appendChild(card);
